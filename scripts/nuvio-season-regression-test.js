@@ -7,6 +7,7 @@ const {
   shouldRetrySeasonMappingWithImdb,
   toAbsoluteEpisodeFromSeasonCounts
 } = require("../src/anime_episode_candidates.js");
+const animeSaturn = require("../src/animesaturn/index.js");
 const animeUnity = require("../src/animeunity/index.js");
 const animeWorld = require("../src/animeworld/index.js");
 const manifest = require("../manifest.json");
@@ -142,6 +143,78 @@ async function run() {
       episodes_count: 7
     }
   ];
+  const jujutsuSaturnRecords = [
+    {
+      name: "Jujutsu Kaisen",
+      link: "Jujutsu-Kaisen-aaaaaaaa",
+      release: "03 Ottobre 2020",
+      state: "1"
+    },
+    {
+      name: "Jujutsu Kaisen 2",
+      link: "Jujutsu-Kaisen-2-aaaaa",
+      release: "06 Luglio 2023",
+      state: "1"
+    },
+    {
+      name: "Jujutsu Kaisen (ITA)",
+      link: "Jujutsu-Kaisen-ITA-aaaa",
+      release: "03 Ottobre 2020",
+      state: "1"
+    },
+    {
+      name: "Jujutsu Kaisen 2 (ITA)",
+      link: "Jujutsu-Kaisen-2-ITA-a",
+      release: "06 Luglio 2023",
+      state: "1"
+    }
+  ];
+  const demonSlayerSaturnRecords = [
+    {
+      name: "Demon Slayer: Kimetsu no Yaiba",
+      link: "Demon-Slayer-Kimetsu-no-Yaiba-aaa",
+      release: "06 Aprile 2019",
+      state: "1"
+    },
+    {
+      name: "Demon Slayer Movie: Mugen Train",
+      link: "Demon-Slayer-Movie-Mugen-Train-a",
+      release: "16 Ottobre 2020",
+      state: "1"
+    },
+    {
+      name: "Demon Slayer: Kimetsu no Yaiba (ITA)",
+      link: "Demon-Slayer-Kimetsu-no-Yaiba-ITA-a",
+      release: "06 Aprile 2019",
+      state: "1"
+    },
+    {
+      name: "Demon Slayer: Kimetsu no Yaiba Entertainment District Arc",
+      link: "Demon-Slayer-Kimetsu-no-Yaiba-Entertainment-District-Arc-a",
+      release: "05 Dicembre 2021",
+      state: "1"
+    }
+  ];
+  const demonSlayerSaturnSeasonTwoRecords = [
+    {
+      name: "Demon Slayer: Kimetsu no Yaiba Mugen Train Arc TV",
+      link: "Demon-Slayer-Kimetsu-no-Yaiba-Mugen-Train-Arc-TV-a",
+      release: "10 Ottobre 2021",
+      state: "1"
+    },
+    {
+      name: "Demon Slayer: Kimetsu no Yaiba",
+      link: "Demon-Slayer-Kimetsu-no-Yaiba-aaa",
+      release: "06 Aprile 2019",
+      state: "1"
+    },
+    {
+      name: "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+      link: "Demon-Slayer-Kimetsu-no-Yaiba-Infinity-Castle-a",
+      release: "18 Luglio 2025",
+      state: "1"
+    }
+  ];
 
   assert.equal(
     toAbsoluteEpisodeFromSeasonCounts(attackOnTitanSeasonCounts, 2, 1),
@@ -260,6 +333,33 @@ async function run() {
       1
     ),
     []
+  );
+  assert.deepEqual(
+    animeSaturn._private.selectAnimeSaturnSearchPaths(jujutsuSaturnRecords, ["Jujutsu Kaisen"], 1),
+    ["/anime/Jujutsu-Kaisen-aaaaaaaa", "/anime/Jujutsu-Kaisen-ITA-aaaa"]
+  );
+  assert.deepEqual(
+    animeSaturn._private.selectAnimeSaturnSearchPaths(jujutsuSaturnRecords, ["Jujutsu Kaisen"], 2),
+    ["/anime/Jujutsu-Kaisen-2-aaaaa", "/anime/Jujutsu-Kaisen-2-ITA-a"]
+  );
+  assert.deepEqual(
+    animeSaturn._private.selectAnimeSaturnSearchPaths(
+      demonSlayerSaturnRecords,
+      ["Demon Slayer: Kimetsu no Yaiba"],
+      1
+    ),
+    [
+      "/anime/Demon-Slayer-Kimetsu-no-Yaiba-aaa",
+      "/anime/Demon-Slayer-Kimetsu-no-Yaiba-ITA-a"
+    ]
+  );
+  assert.deepEqual(
+    animeSaturn._private.selectAnimeSaturnSearchPaths(
+      demonSlayerSaturnSeasonTwoRecords,
+      ["Demon Slayer: Kimetsu no Yaiba Mugen Train Arc", "Mugen Train Arc"],
+      2
+    ),
+    ["/anime/Demon-Slayer-Kimetsu-no-Yaiba-Mugen-Train-Arc-TV-a"]
   );
 
   const animeScrapers = manifest.scrapers.filter((scraper) =>
