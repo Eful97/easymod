@@ -7,6 +7,7 @@ const {
   shouldRetrySeasonMappingWithImdb,
   toAbsoluteEpisodeFromSeasonCounts
 } = require("../src/anime_episode_candidates.js");
+const animeUnity = require("../src/animeunity/index.js");
 const animeWorld = require("../src/animeworld/index.js");
 const manifest = require("../manifest.json");
 
@@ -63,6 +64,84 @@ async function run() {
   const demonSlayerResults = animeWorld._private.parseAnimeWorldSearchResults(
     demonSlayerSearchHtml
   );
+  const jujutsuUnityRecords = [
+    {
+      id: 2791,
+      title: null,
+      title_eng: "Jujutsu Kaisen",
+      slug: "jujutsu-kaisen",
+      type: "TV",
+      episodes_count: 24
+    },
+    {
+      id: 3896,
+      title: null,
+      title_eng: "Jujutsu Kaisen (ITA)",
+      slug: "jujutsu-kaisen-ita",
+      type: "TV",
+      episodes_count: 24
+    },
+    {
+      id: 4197,
+      title: null,
+      title_eng: "Jujutsu Kaisen 2",
+      slug: "jujutsu-kaisen-2",
+      type: "TV",
+      episodes_count: 23
+    },
+    {
+      id: 4786,
+      title: null,
+      title_eng: "Jujutsu Kaisen 2 (ITA)",
+      slug: "jujutsu-kaisen-2-ita",
+      type: "TV",
+      episodes_count: 23
+    }
+  ];
+  const demonSlayerUnityRecords = [
+    {
+      id: 2549,
+      title: "Demon Slayer: Kimetsu no Yaiba",
+      title_eng: "Demon Slayer",
+      slug: "demon-slayer",
+      type: "TV",
+      episodes_count: 26
+    },
+    {
+      id: 2550,
+      title: "Demon Slayer: Kimetsu no Yaiba (ITA)",
+      title_eng: "Demon Slayer (ITA)",
+      slug: "demon-slayer-ita",
+      type: "TV",
+      episodes_count: 26
+    },
+    {
+      id: 3337,
+      title: "Kimetsu no Yaiba: Yuukaku-hen",
+      title_eng: "Demon Slayer: Kimetsu no Yaiba Entertainment District Arc",
+      slug: "demon-slayer-kimetsu-no-yaiba-entertainment-district-arc",
+      type: "TV",
+      episodes_count: 11
+    }
+  ];
+  const demonSlayerUnityArcOnlyRecords = [
+    {
+      id: 3337,
+      title: "Kimetsu no Yaiba: Yuukaku-hen",
+      title_eng: "Demon Slayer: Kimetsu no Yaiba Entertainment District Arc",
+      slug: "demon-slayer-kimetsu-no-yaiba-entertainment-district-arc",
+      type: "TV",
+      episodes_count: 11
+    },
+    {
+      id: 3257,
+      title: "Kimetsu no Yaiba: Mugen Ressha-hen (TV)",
+      title_eng: "Demon Slayer: Kimetsu no Yaiba Mugen Train Arc",
+      slug: "demon-slayer-kimetsu-no-yaiba-mugen-train-arc",
+      type: "TV",
+      episodes_count: 7
+    }
+  ];
 
   assert.equal(
     toAbsoluteEpisodeFromSeasonCounts(attackOnTitanSeasonCounts, 2, 1),
@@ -157,6 +236,30 @@ async function run() {
       2
     ),
     ["/play/demon-slayer-kimetsu-no-yaiba-2.pbncD"]
+  );
+  assert.deepEqual(
+    animeUnity._private.selectAnimeUnitySearchPaths(jujutsuUnityRecords, ["Jujutsu Kaisen"], 1),
+    ["/anime/2791-jujutsu-kaisen", "/anime/3896-jujutsu-kaisen-ita"]
+  );
+  assert.deepEqual(
+    animeUnity._private.selectAnimeUnitySearchPaths(jujutsuUnityRecords, ["Jujutsu Kaisen"], 2),
+    ["/anime/4197-jujutsu-kaisen-2", "/anime/4786-jujutsu-kaisen-2-ita"]
+  );
+  assert.deepEqual(
+    animeUnity._private.selectAnimeUnitySearchPaths(
+      demonSlayerUnityRecords,
+      ["Demon Slayer: Kimetsu no Yaiba"],
+      1
+    ),
+    ["/anime/2549-demon-slayer", "/anime/2550-demon-slayer-ita"]
+  );
+  assert.deepEqual(
+    animeUnity._private.selectAnimeUnitySearchPaths(
+      demonSlayerUnityArcOnlyRecords,
+      ["Demon Slayer: Kimetsu no Yaiba"],
+      1
+    ),
+    []
   );
 
   const animeScrapers = manifest.scrapers.filter((scraper) =>
