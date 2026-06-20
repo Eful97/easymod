@@ -1516,7 +1516,7 @@ function fetchTmdbTitleCandidates(tmdbId, requestedSeason) {
   return __async(this, null, function* () {
     const id = String(tmdbId || "").trim();
     if (!/^\d+$/.test(id)) return [];
-    const languages = ["it-IT", "en-US"];
+    const languages = ["en-US", "it-IT"];
     const titles = [];
     for (const language of languages) {
       const params = new URLSearchParams({
@@ -1573,12 +1573,18 @@ function resolveAnimeSaturnPathsByTitle(lookup, mappingPayload, providerContext 
       ...yield fetchTmdbTitleCandidates(tmdbId, lookup == null ? void 0 : lookup.season)
     ]);
     if (titleCandidates.length === 0) return [];
+    const allRecords = [];
+    const seenLinks = /* @__PURE__ */ new Set();
     for (const title of titleCandidates.slice(0, 6)) {
       const records = yield fetchAnimeSaturnSearchRecords(title);
-      const paths = selectAnimeSaturnSearchPaths(records, titleCandidates, lookup == null ? void 0 : lookup.season);
-      if (paths.length > 0) return paths;
+      for (const record of records) {
+        const link = String((record == null ? void 0 : record.link) || "").trim();
+        if (!link || seenLinks.has(link)) continue;
+        seenLinks.add(link);
+        allRecords.push(record);
+      }
     }
-    return [];
+    return selectAnimeSaturnSearchPaths(allRecords, titleCandidates, lookup == null ? void 0 : lookup.season);
   });
 }
 function withFallbackMappingPayload(mappingPayload, lookup) {

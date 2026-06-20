@@ -62,8 +62,17 @@ async function run() {
       <a href="/play/demon-slayer-kimetsu-no-yaiba-ita.3z-5e" data-jtitle="Kimetsu no Yaiba">Demon Slayer: Kimetsu no Yaiba</a>
     </div>
   `;
+  const demonSlayerMugenWorldSearchHtml = `
+    <div class="film-list">
+      <a href="/play/demon-slayer-kimetsu-no-yaiba-2.pbncD" data-jtitle="Kimetsu no Yaiba: Mugen Ressha-hen">Demon Slayer: Kimetsu no Yaiba Mugen Train Arc TV</a>
+      <a href="/play/demon-slayer-kimetsu-no-yaiba-mugen-train-arc-tv-ita.IEkUo" data-jtitle="Kimetsu no Yaiba: Mugen Ressha-hen">DUB</a>
+    </div>
+  `;
   const demonSlayerResults = animeWorld._private.parseAnimeWorldSearchResults(
     demonSlayerSearchHtml
+  );
+  const demonSlayerMugenWorldResults = animeWorld._private.parseAnimeWorldSearchResults(
+    demonSlayerMugenWorldSearchHtml
   );
   const jujutsuUnityRecords = [
     {
@@ -311,6 +320,17 @@ async function run() {
     ["/play/demon-slayer-kimetsu-no-yaiba-2.pbncD"]
   );
   assert.deepEqual(
+    animeWorld._private.selectAnimeWorldSearchPaths(
+      demonSlayerMugenWorldResults,
+      ["Demon Slayer: Kimetsu no Yaiba Mugen Train Arc", "Mugen Train Arc"],
+      2
+    ),
+    [
+      "/play/demon-slayer-kimetsu-no-yaiba-2.pbncD",
+      "/play/demon-slayer-kimetsu-no-yaiba-mugen-train-arc-tv-ita.IEkUo"
+    ]
+  );
+  assert.deepEqual(
     animeUnity._private.selectAnimeUnitySearchPaths(jujutsuUnityRecords, ["Jujutsu Kaisen"], 1),
     ["/anime/2791-jujutsu-kaisen", "/anime/3896-jujutsu-kaisen-ita"]
   );
@@ -360,6 +380,25 @@ async function run() {
       2
     ),
     ["/anime/Demon-Slayer-Kimetsu-no-Yaiba-Mugen-Train-Arc-TV-a"]
+  );
+  assert.deepEqual(
+    animeSaturn._private.selectAnimeSaturnSearchPaths(
+      [
+        ...demonSlayerSaturnSeasonTwoRecords,
+        {
+          name: "Demon Slayer: Kimetsu no Yaiba Mugen Train Arc TV (ITA)",
+          link: "Demon-Slayer-Kimetsu-no-Yaiba-Mugen-Train-Arc-TV-ITA-a",
+          release: "10 Ottobre 2021",
+          state: "1"
+        }
+      ],
+      ["Demon Slayer: Kimetsu no Yaiba Mugen Train Arc", "Mugen Train Arc"],
+      2
+    ),
+    [
+      "/anime/Demon-Slayer-Kimetsu-no-Yaiba-Mugen-Train-Arc-TV-a",
+      "/anime/Demon-Slayer-Kimetsu-no-Yaiba-Mugen-Train-Arc-TV-ITA-a"
+    ]
   );
 
   const animeScrapers = manifest.scrapers.filter((scraper) =>

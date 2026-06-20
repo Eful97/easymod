@@ -1016,6 +1016,26 @@ function detectExplicitAnimeWorldSeason(result) {
   return seasonMatch ? Number.parseInt(seasonMatch[1], 10) : null;
 }
 
+function getLaterArcMarkers(result) {
+  const text = normalizeAnimeWorldSearchText(
+    `${result?.title || ""} ${result?.jtitle || ""} ${result?.path || ""}`
+  );
+  const markers = [];
+  const knownMarkers = [
+    "entertainment district",
+    "hashira",
+    "infinity castle",
+    "mugen",
+    "ressha",
+    "swordsmith",
+    "yuukaku"
+  ];
+  for (const marker of knownMarkers) {
+    if (text.includes(marker)) markers.push(marker);
+  }
+  return markers;
+}
+
 function scoreAnimeWorldSearchResult(result, titleCandidates, requestedSeason) {
   const haystack = normalizeAnimeWorldSearchText(
     `${result?.title || ""} ${result?.jtitle || ""} ${result?.path || ""}`
@@ -1054,13 +1074,26 @@ function scoreAnimeWorldSearchResult(result, titleCandidates, requestedSeason) {
   if (season > 1) {
     if (explicitSeason === season) bestScore += 100;
     else if (explicitSeason && explicitSeason !== season) return null;
-    else bestScore -= 20;
+    else {
+      const markers = getLaterArcMarkers(result);
+      const candidateText = normalizeAnimeWorldSearchText(titleCandidates.join(" "));
+      if (markers.length > 0 && markers.some((marker) => candidateText.includes(marker))) {
+        bestScore += 60;
+      } else {
+        bestScore -= 20;
+      }
+    }
   } else if (explicitSeason && explicitSeason > 1) {
     return null;
   }
 
   if (isMovie) bestScore -= 120;
-  return bestScore > 0 ? { result, score: bestScore, explicitSeason } : null;
+  const seasonMatched =
+    season > 1 &&
+    getLaterArcMarkers(result).some((marker) =>
+      normalizeAnimeWorldSearchText(titleCandidates.join(" ")).includes(marker)
+    );
+  return bestScore > 0 ? { result, score: bestScore, explicitSeason, seasonMatched } : null;
 }
 
 function selectAnimeWorldSearchPaths(results, titleCandidates, requestedSeason) {
@@ -1072,7 +1105,7 @@ function selectAnimeWorldSearchPaths(results, titleCandidates, requestedSeason) 
   const season = normalizeRequestedSeason(requestedSeason) || 1;
   const preferred =
     season > 1
-      ? scored.filter((entry) => entry.explicitSeason === season)
+      ? scored.filter((entry) => entry.explicitSeason === season || entry.seasonMatched)
       : scored.filter((entry) => !entry.explicitSeason);
   const candidates = preferred.length > 0 ? preferred : scored;
   return uniqueStrings(candidates.map((entry) => entry.result.path)).slice(0, 2);
@@ -1095,9 +1128,45 @@ function extractTitleCandidates(mappingPayload, providerContext = null) {
   return uniqueStrings(values);
 }
 
-function collectTmdbTitles(payload) {
+function isMeaningfulTmdbSeasonName(value) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  return !/^(?:season|stagione|series|specials?)\s*\d*$/i.test(text);
+}
+
+function expandTitleVariants(values) {
+  const out = [];
+  for (const value of values) {
+    const text = String(value || "").trim();
+    if (!text) continue;
+    out.push(text);
+    const colonBase = text.split(/\s*:\s*/)[0]?.trim();
+    if (colonBase && colonBase !== text) out.push(colonBase);
+    const dashBase = text.split(/\s+-\s+/)[0]?.trim();
+    if (dashBase && dashBase !== text) out.push(dashBase);
+  }
+  return uniqueStrings(out);
+}
+
+function collectTmdbTitles(payload, requestedSeason) {
   if (!payload || typeof payload !== "object") return [];
-  const values = [payload.name, payload.original_name, payload.title, payload.original_title];
+  const baseTitles = expandTitleVariants([
+    payload.name,
+    payload.original_name,
+    payload.title,
+    payload.original_title
+  ]);
+  const values = [];
+  const seasonNumber = normalizeRequestedSeason(requestedSeason);
+  const seasonInfo = Array.isArray(payload.seasons)
+    ? payload.seasons.find((item) => Number.parseInt(item?.season_number, 10) === seasonNumber)
+    : null;
+  const seasonName = isMeaningfulTmdbSeasonName(seasonInfo?.name) ? String(seasonInfo.name).trim() : null;
+  if (seasonNumber && seasonNumber > 1 && seasonName) {
+    for (const baseTitle of baseTitles) values.push(`${baseTitle} ${seasonName}`);
+    values.push(seasonName);
+  }
+  values.push(...baseTitles);
   if (Array.isArray(payload.also_known_as)) values.push(...payload.also_known_as);
   const alternativeTitles = payload.alternative_titles?.results;
   if (Array.isArray(alternativeTitles)) {
@@ -1129,11 +1198,11 @@ function parseTmdbPublicTitleCandidates(html) {
   );
 }
 
-async function fetchTmdbTitleCandidates(tmdbId) {
+async function fetchTmdbTitleCandidates(tmdbId, requestedSeason) {
   const id = String(tmdbId || "").trim();
   if (!/^\d+$/.test(id)) return [];
 
-  const languages = ["it-IT", "en-US"];
+  const languages = ["en-US", "it-IT"];
   const titles = [];
   for (const language of languages) {
     const params = new URLSearchParams({
@@ -1148,7 +1217,7 @@ async function fetchTmdbTitleCandidates(tmdbId) {
         cacheKey: `tmdb-title:${id}:${language}`,
         timeoutMs: FETCH_TIMEOUT
       });
-      titles.push(...collectTmdbTitles(payload));
+      titles.push(...collectTmdbTitles(payload, requestedSeason));
     } catch (error) {
       console.error("[AnimeWorld] TMDB title lookup failed:", error.message);
     }
@@ -1182,7 +1251,7 @@ async function resolveAnimeWorldPathsByTitle(lookup, mappingPayload, providerCon
 
   const titleCandidates = uniqueStrings([
     ...extractTitleCandidates(mappingPayload, providerContext),
-    ...(await fetchTmdbTitleCandidates(tmdbId))
+    ...(await fetchTmdbTitleCandidates(tmdbId, lookup?.season))
   ]);
   if (titleCandidates.length === 0) return [];
 

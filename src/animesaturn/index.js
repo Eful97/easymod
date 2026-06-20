@@ -1272,7 +1272,7 @@ async function fetchTmdbTitleCandidates(tmdbId, requestedSeason) {
   const id = String(tmdbId || "").trim();
   if (!/^\d+$/.test(id)) return [];
 
-  const languages = ["it-IT", "en-US"];
+  const languages = ["en-US", "it-IT"];
   const titles = [];
   for (const language of languages) {
     const params = new URLSearchParams({
@@ -1333,12 +1333,18 @@ async function resolveAnimeSaturnPathsByTitle(lookup, mappingPayload, providerCo
   ]);
   if (titleCandidates.length === 0) return [];
 
+  const allRecords = [];
+  const seenLinks = new Set();
   for (const title of titleCandidates.slice(0, 6)) {
     const records = await fetchAnimeSaturnSearchRecords(title);
-    const paths = selectAnimeSaturnSearchPaths(records, titleCandidates, lookup?.season);
-    if (paths.length > 0) return paths;
+    for (const record of records) {
+      const link = String(record?.link || "").trim();
+      if (!link || seenLinks.has(link)) continue;
+      seenLinks.add(link);
+      allRecords.push(record);
+    }
   }
-  return [];
+  return selectAnimeSaturnSearchPaths(allRecords, titleCandidates, lookup?.season);
 }
 
 function withFallbackMappingPayload(mappingPayload, lookup) {

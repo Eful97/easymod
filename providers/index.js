@@ -11787,6 +11787,25 @@ var require_animeworld = __commonJS({
       const seasonMatch = text.match(/(?:^|\s)(?:s(?:eason)?\s*)?([2-9])(?:\s|$)/);
       return seasonMatch ? Number.parseInt(seasonMatch[1], 10) : null;
     }
+    function getLaterArcMarkers(result) {
+      const text = normalizeAnimeWorldSearchText(
+        `${(result == null ? void 0 : result.title) || ""} ${(result == null ? void 0 : result.jtitle) || ""} ${(result == null ? void 0 : result.path) || ""}`
+      );
+      const markers = [];
+      const knownMarkers = [
+        "entertainment district",
+        "hashira",
+        "infinity castle",
+        "mugen",
+        "ressha",
+        "swordsmith",
+        "yuukaku"
+      ];
+      for (const marker of knownMarkers) {
+        if (text.includes(marker)) markers.push(marker);
+      }
+      return markers;
+    }
     function scoreAnimeWorldSearchResult(result, titleCandidates, requestedSeason) {
       const haystack = normalizeAnimeWorldSearchText(
         `${(result == null ? void 0 : result.title) || ""} ${(result == null ? void 0 : result.jtitle) || ""} ${(result == null ? void 0 : result.path) || ""}`
@@ -11820,17 +11839,28 @@ var require_animeworld = __commonJS({
       if (season > 1) {
         if (explicitSeason === season) bestScore += 100;
         else if (explicitSeason && explicitSeason !== season) return null;
-        else bestScore -= 20;
+        else {
+          const markers = getLaterArcMarkers(result);
+          const candidateText = normalizeAnimeWorldSearchText(titleCandidates.join(" "));
+          if (markers.length > 0 && markers.some((marker) => candidateText.includes(marker))) {
+            bestScore += 60;
+          } else {
+            bestScore -= 20;
+          }
+        }
       } else if (explicitSeason && explicitSeason > 1) {
         return null;
       }
       if (isMovie) bestScore -= 120;
-      return bestScore > 0 ? { result, score: bestScore, explicitSeason } : null;
+      const seasonMatched = season > 1 && getLaterArcMarkers(result).some(
+        (marker) => normalizeAnimeWorldSearchText(titleCandidates.join(" ")).includes(marker)
+      );
+      return bestScore > 0 ? { result, score: bestScore, explicitSeason, seasonMatched } : null;
     }
     function selectAnimeWorldSearchPaths(results, titleCandidates, requestedSeason) {
       const scored = (Array.isArray(results) ? results : []).map((result) => scoreAnimeWorldSearchResult(result, titleCandidates, requestedSeason)).filter(Boolean).sort((a, b) => b.score - a.score);
       const season = normalizeRequestedSeason(requestedSeason) || 1;
-      const preferred = season > 1 ? scored.filter((entry) => entry.explicitSeason === season) : scored.filter((entry) => !entry.explicitSeason);
+      const preferred = season > 1 ? scored.filter((entry) => entry.explicitSeason === season || entry.seasonMatched) : scored.filter((entry) => !entry.explicitSeason);
       const candidates = preferred.length > 0 ? preferred : scored;
       return uniqueStrings(candidates.map((entry) => entry.result.path)).slice(0, 2);
     }
@@ -11850,10 +11880,43 @@ var require_animeworld = __commonJS({
       }
       return uniqueStrings(values);
     }
-    function collectTmdbTitles(payload) {
+    function isMeaningfulTmdbSeasonName(value) {
+      const text = String(value || "").trim();
+      if (!text) return false;
+      return !/^(?:season|stagione|series|specials?)\s*\d*$/i.test(text);
+    }
+    function expandTitleVariants(values) {
+      var _a, _b;
+      const out = [];
+      for (const value of values) {
+        const text = String(value || "").trim();
+        if (!text) continue;
+        out.push(text);
+        const colonBase = (_a = text.split(/\s*:\s*/)[0]) == null ? void 0 : _a.trim();
+        if (colonBase && colonBase !== text) out.push(colonBase);
+        const dashBase = (_b = text.split(/\s+-\s+/)[0]) == null ? void 0 : _b.trim();
+        if (dashBase && dashBase !== text) out.push(dashBase);
+      }
+      return uniqueStrings(out);
+    }
+    function collectTmdbTitles(payload, requestedSeason) {
       var _a;
       if (!payload || typeof payload !== "object") return [];
-      const values = [payload.name, payload.original_name, payload.title, payload.original_title];
+      const baseTitles = expandTitleVariants([
+        payload.name,
+        payload.original_name,
+        payload.title,
+        payload.original_title
+      ]);
+      const values = [];
+      const seasonNumber = normalizeRequestedSeason(requestedSeason);
+      const seasonInfo = Array.isArray(payload.seasons) ? payload.seasons.find((item) => Number.parseInt(item == null ? void 0 : item.season_number, 10) === seasonNumber) : null;
+      const seasonName = isMeaningfulTmdbSeasonName(seasonInfo == null ? void 0 : seasonInfo.name) ? String(seasonInfo.name).trim() : null;
+      if (seasonNumber && seasonNumber > 1 && seasonName) {
+        for (const baseTitle of baseTitles) values.push(`${baseTitle} ${seasonName}`);
+        values.push(seasonName);
+      }
+      values.push(...baseTitles);
       if (Array.isArray(payload.also_known_as)) values.push(...payload.also_known_as);
       const alternativeTitles = (_a = payload.alternative_titles) == null ? void 0 : _a.results;
       if (Array.isArray(alternativeTitles)) {
@@ -11876,11 +11939,11 @@ var require_animeworld = __commonJS({
         ).filter(Boolean)
       );
     }
-    function fetchTmdbTitleCandidates(tmdbId) {
+    function fetchTmdbTitleCandidates(tmdbId, requestedSeason) {
       return __async(this, null, function* () {
         const id = String(tmdbId || "").trim();
         if (!/^\d+$/.test(id)) return [];
-        const languages = ["it-IT", "en-US"];
+        const languages = ["en-US", "it-IT"];
         const titles = [];
         for (const language of languages) {
           const params = new URLSearchParams({
@@ -11895,7 +11958,7 @@ var require_animeworld = __commonJS({
               cacheKey: `tmdb-title:${id}:${language}`,
               timeoutMs: FETCH_TIMEOUT
             });
-            titles.push(...collectTmdbTitles(payload));
+            titles.push(...collectTmdbTitles(payload, requestedSeason));
           } catch (error) {
             console.error("[AnimeWorld] TMDB title lookup failed:", error.message);
           }
@@ -11924,7 +11987,7 @@ var require_animeworld = __commonJS({
         if (!/^\d+$/.test(tmdbId)) return [];
         const titleCandidates = uniqueStrings([
           ...extractTitleCandidates(mappingPayload, providerContext),
-          ...yield fetchTmdbTitleCandidates(tmdbId)
+          ...yield fetchTmdbTitleCandidates(tmdbId, lookup == null ? void 0 : lookup.season)
         ]);
         if (titleCandidates.length === 0) return [];
         for (const title of titleCandidates.slice(0, 5)) {
@@ -13107,7 +13170,7 @@ var require_animesaturn = __commonJS({
       return __async(this, null, function* () {
         const id = String(tmdbId || "").trim();
         if (!/^\d+$/.test(id)) return [];
-        const languages = ["it-IT", "en-US"];
+        const languages = ["en-US", "it-IT"];
         const titles = [];
         for (const language of languages) {
           const params = new URLSearchParams({
@@ -13164,12 +13227,18 @@ var require_animesaturn = __commonJS({
           ...yield fetchTmdbTitleCandidates(tmdbId, lookup == null ? void 0 : lookup.season)
         ]);
         if (titleCandidates.length === 0) return [];
+        const allRecords = [];
+        const seenLinks = /* @__PURE__ */ new Set();
         for (const title of titleCandidates.slice(0, 6)) {
           const records = yield fetchAnimeSaturnSearchRecords(title);
-          const paths = selectAnimeSaturnSearchPaths(records, titleCandidates, lookup == null ? void 0 : lookup.season);
-          if (paths.length > 0) return paths;
+          for (const record of records) {
+            const link = String((record == null ? void 0 : record.link) || "").trim();
+            if (!link || seenLinks.has(link)) continue;
+            seenLinks.add(link);
+            allRecords.push(record);
+          }
         }
-        return [];
+        return selectAnimeSaturnSearchPaths(allRecords, titleCandidates, lookup == null ? void 0 : lookup.season);
       });
     }
     function withFallbackMappingPayload(mappingPayload, lookup) {
