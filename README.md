@@ -1,4 +1,4 @@
-# Nuvio Plugin & Stremio Addon
+# Easymod - Nuvio Plugin & Stremio Addon
 
 Questo repository contiene una collezione di provider italiani per lo streaming di Film, Serie TV e Anime.
 Il progetto è progettato per essere versatile e può essere utilizzato in due modi diversi:
@@ -6,15 +6,32 @@ Il progetto è progettato per essere versatile e può essere utilizzato in due m
 1.  Come **Plugin per Nuvio**
 2.  Come **Addon per Stremio**
 
-## 📺 Provider Supportati
+## Provider supportati
 
--   **AnimeUnity** (Anime)
--   **AnimeWorld** (Anime)
--   **AnimeSaturn** (Anime)
--   **GuardaHD** (Film)
--   **GuardoSerie** (Film & Serie TV)
--   **StreamingCommunity** (Film & Serie TV)
--   **vidxGo** (Film & Serie TV)
+Versione manifest: `1.1.103`
+
+| Provider | Contenuti | Note |
+| --- | --- | --- |
+| AnimeUnity | Anime, Film, Serie TV | Testato con catalogo TMDB/Kitsu e stagioni anime |
+| AnimeWorld | Anime, Film, Serie TV | Testato con stagioni anime e varianti JP/ITA |
+| AnimeSaturn | Anime, Film, Serie TV | Testato con stagioni anime e varianti JP/ITA |
+| CB01 | Film | Integrato dai plugin ToastFlix; testato con film TMDB |
+| Eurostreaming | Serie TV | Integrato dai plugin ToastFlix; testato con serie TMDB |
+| VidxGo | Film, Serie TV | Disponibile come scraper singolo e nell'aggregatore |
+| GuardaHD | Film, Serie TV | Testato con film TMDB |
+| Guardoserie | Film, Serie TV | Richiede bypass Cloudflare lato server |
+| StreamingCommunity | Film, Serie TV | Testato con film TMDB |
+| CinemaCity | Film, Serie TV | Testato con titoli presenti nel catalogo CinemaCity |
+| AltadefinizioneStreaming | Film, Serie TV | Il sito sorgente puo richiedere accesso/gate Telegram |
+| NetMirror | Film, Serie TV | Testato con film TMDB |
+
+## Stato test scraping
+
+Ultima verifica locale:
+
+- Funzionanti con stream reali: GuardaHD, AnimeUnity, AnimeWorld, AnimeSaturn, CB01, Eurostreaming, VidxGo, StreamingCommunity, CinemaCity, NetMirror.
+- Guardoserie: il path del bypass e corretto; per il test locale serve la dipendenza Python `scrapling`. Nel `Dockerfile` e gia installata.
+- AltadefinizioneStreaming: al momento l'API del sito risponde con gate Telegram (`401`), quindi puo non restituire stream senza accesso.
 
 ---
 
@@ -26,9 +43,11 @@ Per installare i provider su Nuvio, basta seguire questi semplici passaggi:
 2.  Vai nelle **Impostazioni** > **Plugin**.
 3.  Incolla il seguente link nel campo apposito per aggiungere un plugin esterno:
     ```text
-    https://raw.githubusercontent.com/realbestia1/easystreams/refs/heads/main/
+    https://raw.githubusercontent.com/Eful97/Easymod/main/
     ```
 4.  I provider saranno immediatamente attivi.
+
+Se Nuvio mostra ancora la vecchia lista, rimuovi e reinserisci il plugin oppure attendi che la cache del manifest si aggiorni.
 
 ---
 
@@ -86,6 +105,15 @@ Quando l'addon viene eseguito su un server remoto (non in locale), alcuni provid
 -   **Struttura**: Ogni provider ha la sua cartella in `src/`.
 -   **Build**: Lo script `build.js` compila i provider per Nuvio.
 -   **Stremio**: Il file `stremio_addon.js` funge da server e adattatore per convertire i risultati dei provider nel formato Stremio.
+-   **Manifest**: `manifest.json` espone gli scraper installabili da Nuvio.
+
+### Comandi utili
+
+```bash
+npm start
+node build.js index
+node scripts/nuvio-season-regression-test.js
+```
 
 ---
 
