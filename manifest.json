@@ -1,6 +1,6 @@
 {
   "name": "EasyStreams",
-  "version": "1.1.101",
+  "version": "1.1.102",
   "scrapers": [
     {
       "id": "easystreams-guardoserie",
@@ -64,6 +64,45 @@
       "formats": ["mp4", "m3u8"],
       "idPrefixes": ["kitsu:", "tmdb:", "tt"],
       "filename": "providers/animesaturn.js",
+      "supportedTypes": ["movie", "tv", "series"],
+      "enabled": true
+    },
+    {
+      "id": "easystreams-cb01",
+      "name": "CB01",
+      "version": "1.0.0",
+      "description": "Movies and Series from CB01",
+      "resources": ["stream"],
+      "contentLanguage": ["it"],
+      "formats": ["mp4", "m3u8"],
+      "idPrefixes": ["tmdb:", "tt"],
+      "filename": "providers/cb01.js",
+      "supportedTypes": ["movie", "tv", "series"],
+      "enabled": true
+    },
+    {
+      "id": "easystreams-eurostreaming",
+      "name": "Eurostreaming",
+      "version": "1.0.0",
+      "description": "Series from Eurostreaming",
+      "resources": ["stream"],
+      "contentLanguage": ["it"],
+      "formats": ["mp4", "m3u8"],
+      "idPrefixes": ["tmdb:", "tt"],
+      "filename": "providers/eurostreaming.js",
+      "supportedTypes": ["tv", "series"],
+      "enabled": true
+    },
+    {
+      "id": "easystreams-vidxgo",
+      "name": "VidxGo",
+      "version": "1.0.0",
+      "description": "Movies and Series from VidxGo",
+      "resources": ["stream"],
+      "contentLanguage": ["it"],
+      "formats": ["m3u8"],
+      "idPrefixes": ["tmdb:", "tt"],
+      "filename": "providers/vidxgo.js",
       "supportedTypes": ["movie", "tv", "series"],
       "enabled": true
     },
