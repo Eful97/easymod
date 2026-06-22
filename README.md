@@ -76,3 +76,7 @@ Esegui il regression test principale:
 ```bash
 npm test
 ```
+
+## Crediti
+
+Questo progetto nasce dal codice di [realbestia1/easystreams](https://github.com/realbestia1/easystreams), adattato e mantenuto per l'uso come plugin Nuvio.
