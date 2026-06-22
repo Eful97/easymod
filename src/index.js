@@ -4,7 +4,9 @@ const streamingcommunity = require('./streamingcommunity/index');
 const animeunity = require('./animeunity/index');
 const animeworld = require('./animeworld/index');
 const animesaturn = require('./animesaturn/index');
+const cb01 = require('./cb01/index');
 const cinemacity = require('./cinemacity/index');
+const eurostreaming = require('./eurostreaming/index');
 const vidxgo = require('./vidxgo/index');
 const netmirror = require('./netmirror/index');
 const altadefinizionestreaming = require('./altadefinizionestreaming/index');
@@ -195,7 +197,7 @@ async function getStreams(id, type, season, episode) {
         if (likelyAnime || isKitsuRequest) {
             selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'guardoserie', 'streamingcommunity', 'guardahd');
         } else {
-            selectedProviders.push('streamingcommunity', 'vidxgo', 'cinemacity', 'netmirror', 'guardahd', 'guardoserie', 'altadefinizionestreaming');
+            selectedProviders.push('streamingcommunity', 'vidxgo', 'cb01', 'cinemacity', 'netmirror', 'guardahd', 'guardoserie', 'altadefinizionestreaming');
         }
     } else if (normalizedType === 'anime') {
         selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'guardoserie', 'vidxgo');
@@ -204,9 +206,9 @@ async function getStreams(id, type, season, episode) {
             selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'guardoserie');
         } else {
             if (isImdbRequest) {
-                selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'streamingcommunity', 'vidxgo', 'cinemacity', 'netmirror', 'guardoserie', 'altadefinizionestreaming');
+                selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'streamingcommunity', 'vidxgo', 'cb01', 'eurostreaming', 'cinemacity', 'netmirror', 'guardoserie', 'altadefinizionestreaming');
             } else {
-                selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'streamingcommunity', 'vidxgo', 'cinemacity', 'netmirror', 'guardoserie', 'altadefinizionestreaming');
+                selectedProviders.push('animeunity', 'animeworld', 'animesaturn', 'streamingcommunity', 'vidxgo', 'cb01', 'eurostreaming', 'cinemacity', 'netmirror', 'guardoserie', 'altadefinizionestreaming');
             }
         }
     } else {
@@ -251,6 +253,22 @@ async function getStreams(id, type, season, episode) {
                 animesaturn.getStreams(id, normalizedType, effectiveSeason, normalizedEpisode, sharedContext)
                     .then(s => ({ provider: 'AnimeSaturn', streams: s, status: 'fulfilled' }))
                     .catch(e => ({ provider: 'AnimeSaturn', error: e, status: 'rejected' }))
+            );
+            continue;
+        }
+        if (providerName === 'cb01') {
+            promises.push(
+                cb01.getStreams(id, normalizedType, effectiveSeason, normalizedEpisode, sharedContext)
+                    .then(s => ({ provider: 'CB01', streams: s, status: 'fulfilled' }))
+                    .catch(e => ({ provider: 'CB01', error: e, status: 'rejected' }))
+            );
+            continue;
+        }
+        if (providerName === 'eurostreaming') {
+            promises.push(
+                eurostreaming.getStreams(id, normalizedType, effectiveSeason, normalizedEpisode, sharedContext)
+                    .then(s => ({ provider: 'Eurostreaming', streams: s, status: 'fulfilled' }))
+                    .catch(e => ({ provider: 'Eurostreaming', error: e, status: 'rejected' }))
             );
             continue;
         }
