@@ -9350,7 +9350,7 @@ var require_streamingcommunity = __commonJS({
             url: streamUrl,
             easyProxySourceUrl: embedUrl,
             quality: normalizedQuality,
-            type: "direct",
+            type: "hls",
             headers: streamHeaders,
             behaviorHints: {
               notWebReady: false

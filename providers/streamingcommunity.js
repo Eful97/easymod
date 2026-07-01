@@ -607,7 +607,7 @@ function getStreams(id, type, season, episode, providerContext = null) {
         url: streamUrl,
         easyProxySourceUrl: embedUrl,
         quality: normalizedQuality,
-        type: "direct",
+        type: "hls",
         headers: streamHeaders,
         behaviorHints: {
           notWebReady: false
