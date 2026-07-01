@@ -9158,6 +9158,16 @@ var require_streamingcommunity = __commonJS({
         url: urlMatch[1]
       };
     }
+    function ensureAndroidTvHlsPath(url) {
+      if (!url) return url;
+      try {
+        const parsed = new URL(url);
+        parsed.pathname = parsed.pathname.replace(/\/playlist\/(\d+)(?=\/?$)/i, "/playlist/$1.m3u8");
+        return parsed.toString();
+      } catch (e) {
+        return String(url).replace(/\/playlist\/(\d+)(?=[?#]|$)/i, "/playlist/$1.m3u8");
+      }
+    }
     function getQualityFromName(qualityStr) {
       if (!qualityStr) return "Unknown";
       const quality = qualityStr.toUpperCase();
@@ -9316,8 +9326,9 @@ var require_streamingcommunity = __commonJS({
             console.log("[StreamingCommunity] Could not find playlist info in HTML");
             return [];
           }
-          const separator = masterPlaylist.url.includes("?") ? "&" : "?";
-          const streamUrl = `${masterPlaylist.url}${separator}token=${encodeURIComponent(masterPlaylist.token)}&expires=${encodeURIComponent(masterPlaylist.expires)}&h=1&lang=it`;
+          const playlistUrl = ensureAndroidTvHlsPath(masterPlaylist.url);
+          const separator = playlistUrl.includes("?") ? "&" : "?";
+          const streamUrl = `${playlistUrl}${separator}token=${encodeURIComponent(masterPlaylist.token)}&expires=${encodeURIComponent(masterPlaylist.expires)}&h=1&lang=it`;
           const streamHeaders = getPlaylistHeaders(embedUrl);
           console.log(`[StreamingCommunity] Final stream URL: ${streamUrl}`);
           let quality = "1080p";
